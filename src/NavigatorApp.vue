@@ -301,15 +301,18 @@ export default {
 	},
 
 	async mounted() {
-		// Fix: NcContent sets height to var(--body-height) ≈ 100vh via inline
-		// !important, which overflows #content (100vh − header). CSS cannot
-		// override inline !important, so we fix it in JS after mount.
-		this.$nextTick(() => {
+		// Fix NcContent layout: it sets height=var(--body-height) ≈ 100vh
+		// and margin-top=var(--header-height) which overflows #content.
+		// CSS !important may not beat inline styles, so we also fix via JS.
+		const fixLayout = () => {
 			const cv = document.getElementById('content-vue')
 			if (cv) {
 				cv.style.setProperty('height', '100%', 'important')
+				cv.style.setProperty('margin', '0', 'important')
 			}
-		})
+		}
+		this.$nextTick(fixLayout)
+		requestAnimationFrame(() => requestAnimationFrame(fixLayout))
 
 		await this.loadSettings()
 		await this.refreshTree()

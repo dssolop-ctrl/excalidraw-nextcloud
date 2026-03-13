@@ -31,13 +31,16 @@
 }
 
 /* NcContent renders as .content with id="content-vue" — fill parent.
-   Note: height is overridden by JS in mounted() because NcContent
-   applies inline !important that CSS alone cannot beat. */
+   NcContent applies margin-top: var(--header-height) and
+   margin: var(--body-container-margin) which causes a gap at the top
+   and overflow at the bottom. Reset them. */
 #content.app-excalidraw > .content,
 #content.app-excalidraw > #content-vue {
 	width: 100% !important;
 	height: 100% !important;
 	display: flex !important;
+	margin: 0 !important;
+	border-radius: 0 !important;
 }
 
 /* NcAppNavigation outer wrapper — fill height */
