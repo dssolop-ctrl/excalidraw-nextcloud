@@ -117,9 +117,15 @@ if ! grep -q "custom_apps" "$NC_ROOT/config/config.php" 2>/dev/null; then
 fi
 
 # ─── Enable the app ─────────────────────────────────────────
-info "Enabling excalidraw app..."
+info "Re-registering excalidraw app..."
+php "$NC_ROOT/occ" app:disable excalidraw 2>/dev/null || true
 php "$NC_ROOT/occ" app:enable excalidraw || \
   error "Failed to enable the app. Check the logs: php $NC_ROOT/occ log:tail"
+
+# Run upgrade to refresh route cache and navigation entries
+info "Refreshing caches..."
+php "$NC_ROOT/occ" upgrade 2>/dev/null || true
+php "$NC_ROOT/occ" maintenance:repair 2>/dev/null || true
 
 # Update MIME type database
 info "Updating MIME type database..."

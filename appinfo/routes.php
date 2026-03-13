@@ -26,7 +26,7 @@ return [
 		// API: create new .excalidraw file
 		[
 			'name' => 'api#createFile',
-			'url'  => '/api/v1/file',
+			'url'  => '/api/v1/create',
 			'verb' => 'POST',
 		],
 

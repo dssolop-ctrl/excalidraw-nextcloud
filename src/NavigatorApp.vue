@@ -289,7 +289,7 @@ export default {
 
 			this.creating = true
 			try {
-				const { data } = await axios.post(generateUrl('/apps/excalidraw/api/v1/file'), {
+				const { data } = await axios.post(generateUrl('/apps/excalidraw/api/v1/create'), {
 					dir: this.selectedFolderPath,
 					name,
 				})
