@@ -581,13 +581,31 @@ export default {
 	display: flex;
 	overflow: hidden;
 }
-#content.app-excalidraw .app-navigation {
+
+/* NcContent (.content class, id="content-vue") — fill parent */
+#content.app-excalidraw > .content,
+#content.app-excalidraw > #content-vue {
+	width: 100%;
 	height: 100%;
 	display: flex;
-	flex-direction: column;
 }
+
+/* Outer navigation wrapper */
+#content.app-excalidraw .app-navigation {
+	height: 100%;
+}
+
+/* Inner <nav> — flex column so footer slot sticks to bottom */
+#content.app-excalidraw .app-navigation__content {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
+/* Navigation body — scrollable, takes remaining space */
 #content.app-excalidraw .app-navigation__body {
 	flex: 1;
 	overflow-y: auto;
+	min-height: 0;
 }
 </style>
