@@ -109,12 +109,13 @@
 			</div>
 		</NcAppContent>
 
-		<!-- Settings dialog -->
+		<!-- Settings dialog (use :open prop, not v-if + @close,
+			 to avoid focus-return retriggering the Settings button) -->
 		<NcDialog
-			v-if="showSettings"
+			:open="showSettings"
+			@update:open="showSettings = $event"
 			:name="tr('Settings')"
-			size="normal"
-			@close="showSettings = false">
+			size="normal">
 			<div class="settings-body">
 				<!-- Folders section -->
 				<div class="settings-section">
@@ -177,9 +178,9 @@
 
 		<!-- New drawing dialog -->
 		<NcDialog
-			v-if="showNewFile"
-			:name="tr('New drawing')"
-			@close="showNewFile = false">
+			:open="showNewFile"
+			@update:open="showNewFile = $event"
+			:name="tr('New drawing')">
 			<div class="dialog-body">
 				<NcTextField
 					ref="newFileInput"
