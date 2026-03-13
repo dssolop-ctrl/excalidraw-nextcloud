@@ -1,14 +1,10 @@
 /*
  * Navigator page layout
  *
- * Vue replaces #excalidraw-navigator on mount, so we target
- * Nextcloud's real wrapper (#content) and @nextcloud/vue's
- * rendered elements.
- *
- * DOM structure after mount (confirmed via DevTools diagnostic):
- *   #content.app-excalidraw              ← NC server-side wrapper (968px)
+ * DOM structure after mount:
+ *   #content.app-excalidraw              ← NC server-side wrapper
  *     H1.hidden-visually                  ← skip-nav heading
- *     #content-vue.content.app-excalidraw ← NcContent (height fixed via JS)
+ *     #content-vue.content.app-excalidraw ← NcContent
  *       .app-navigation                    ← NcAppNavigation (outer div)
  *         nav.app-navigation__content        ← inner <nav>, 4 children:
  *           .app-navigation__search            ← search slot (empty)
@@ -17,29 +13,24 @@
  *           .nav-footer                        ← footer slot content
  *         .app-navigation-toggle-wrapper     ← collapse button
  *       main.app-content                   ← NcAppContent
- *
- * Key fix: NcContent sets height via inline !important to var(--body-height)
- * which equals 100vh — overflowing #content by header-height pixels.
- * This is corrected in NavigatorApp.vue mounted() via JS.
  */
 
-/* NC wraps our template inside #content — ensure full viewport height */
+/* #content — don't force height (NC handles it), just ensure flex + clip */
 #content.app-excalidraw {
-	height: calc(100vh - var(--header-height, 50px)) !important;
 	display: flex !important;
 	overflow: hidden !important;
+	padding: 0 !important;
 }
 
-/* NcContent renders as .content with id="content-vue" — fill parent.
-   NcContent applies margin-top: var(--header-height) and
-   margin: var(--body-container-margin) which causes a gap at the top
-   and overflow at the bottom. Reset them. */
+/* NcContent — fill parent via flex, strip margin/radius/padding that NC adds */
 #content.app-excalidraw > .content,
 #content.app-excalidraw > #content-vue {
+	flex: 1 !important;
+	min-height: 0 !important;
 	width: 100% !important;
-	height: 100% !important;
 	display: flex !important;
 	margin: 0 !important;
+	padding: 0 !important;
 	border-radius: 0 !important;
 }
 
@@ -55,9 +46,7 @@
 	height: 100% !important;
 }
 
-/* When #list slot is used, tree content goes into .app-navigation__list
-   (a sibling of .app-navigation__body, not inside it).
-   The list should be the scrollable area. */
+/* List (from #list slot) — scrollable, takes remaining space */
 #content.app-excalidraw .app-navigation__list {
 	flex: 1 !important;
 	overflow-y: auto !important;

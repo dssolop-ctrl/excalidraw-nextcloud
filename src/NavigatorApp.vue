@@ -301,14 +301,20 @@ export default {
 	},
 
 	async mounted() {
-		// Fix NcContent layout: it sets height=var(--body-height) ≈ 100vh
-		// and margin-top=var(--header-height) which overflows #content.
-		// CSS !important may not beat inline styles, so we also fix via JS.
+		// Fix NcContent layout: it adds margin, padding, border-radius and
+		// height that cause overflow inside #content. CSS may not beat
+		// scoped/inline styles, so we also fix via JS.
 		const fixLayout = () => {
 			const cv = document.getElementById('content-vue')
 			if (cv) {
-				cv.style.setProperty('height', '100%', 'important')
 				cv.style.setProperty('margin', '0', 'important')
+				cv.style.setProperty('padding', '0', 'important')
+				cv.style.setProperty('border-radius', '0', 'important')
+				cv.style.setProperty('height', '100%', 'important')
+			}
+			const ct = document.getElementById('content')
+			if (ct) {
+				ct.style.setProperty('padding', '0', 'important')
 			}
 		}
 		this.$nextTick(fixLayout)
