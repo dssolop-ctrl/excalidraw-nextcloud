@@ -14,7 +14,7 @@
 			</template>
 
 			<template #footer>
-				<ul class="nav-footer-list">
+				<div class="nav-footer">
 					<NcAppNavigationItem
 						:name="tr('Refresh')"
 						@click="refreshTree">
@@ -29,7 +29,7 @@
 							<span class="icon-settings" />
 						</template>
 					</NcAppNavigationItem>
-				</ul>
+				</div>
 			</template>
 		</NcAppNavigation>
 
@@ -427,10 +427,11 @@ export default {
 .excalidraw-content {
 	padding: 20px 24px 20px 52px;
 	height: 100%;
-	min-height: 100%;
+	min-height: 0;
 	overflow-y: auto;
 	box-sizing: border-box;
 	background: var(--color-main-background);
+	border-left: 1px solid var(--color-border);
 }
 .content-header {
 	display: flex;
@@ -482,10 +483,9 @@ export default {
 }
 
 /* Sidebar footer */
-.nav-footer-list {
-	list-style: none;
-	margin: 0;
+.nav-footer {
 	padding: 0;
+	border-top: 1px solid var(--color-border);
 }
 
 /* Settings dialog */

@@ -1,6 +1,22 @@
-/* Navigator page styles */
+/* Navigator page — full-height layout chain */
+
+/* NC wraps our template in #content-vue */
 #content-vue {
+	height: 100% !important;
+}
+
+/* Our mount point must pass full height to NcContent */
+#excalidraw-navigator {
 	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+/* Ensure NcContent fills the mount point */
+#excalidraw-navigator > .content-vue,
+#excalidraw-navigator > [class*="content"] {
+	flex: 1;
+	min-height: 0;
 }
 
 @media (max-width: 768px) {
