@@ -21,7 +21,7 @@ Based on [excalidraw-nextcloud](https://github.com/KaustubhPatange/excalidraw-ne
 ### One-line install (inside Nextcloud container)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/excalidraw-nextcloud/master/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/dssolop-ctrl/excalidraw-nextcloud/master/install.sh | bash
 ```
 
 For TrueNAS Scale / Docker:
@@ -32,7 +32,7 @@ docker ps | grep -i next
 
 # Run the installer inside it
 docker exec -it <container-name> bash -c \
-  "curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/excalidraw-nextcloud/master/install.sh | bash"
+  "curl -fsSL https://raw.githubusercontent.com/dssolop-ctrl/excalidraw-nextcloud/master/install.sh | bash"
 ```
 
 If Nextcloud root is not `/var/www/html`:
@@ -54,7 +54,7 @@ NC_ROOT=/path/to/nextcloud curl -fsSL ... | bash
 
 ```bash
 docker exec -it <container-name> bash -c \
-  "curl -fsSL https://raw.githubusercontent.com/YOUR_USERNAME/excalidraw-nextcloud/master/uninstall.sh | bash"
+  "curl -fsSL https://raw.githubusercontent.com/dssolop-ctrl/excalidraw-nextcloud/master/uninstall.sh | bash"
 ```
 
 ---
@@ -68,7 +68,7 @@ Re-run the install command. It removes the old version and installs the latest r
 ## Development
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/excalidraw-nextcloud.git
+git clone https://github.com/dssolop-ctrl/excalidraw-nextcloud.git
 cd excalidraw-nextcloud
 npm install
 npm run dev   # Watch mode
