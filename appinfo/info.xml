@@ -17,7 +17,7 @@
 		<nextcloud min-version="28" max-version="32"/>
 	</dependencies>
 	<navigation>
-		<n>Excalidraw</n>
+		<name>Excalidraw</name>
 		<route>excalidraw.page.index</route>
 		<order>50</order>
 	</navigation>
