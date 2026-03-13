@@ -301,6 +301,16 @@ export default {
 	},
 
 	async mounted() {
+		// Fix: NcContent sets height to var(--body-height) ≈ 100vh via inline
+		// !important, which overflows #content (100vh − header). CSS cannot
+		// override inline !important, so we fix it in JS after mount.
+		this.$nextTick(() => {
+			const cv = document.getElementById('content-vue')
+			if (cv) {
+				cv.style.setProperty('height', '100%', 'important')
+			}
+		})
+
 		await this.loadSettings()
 		await this.refreshTree()
 	},
@@ -576,34 +586,15 @@ export default {
 
 <!-- Unscoped styles to reach NC layout wrappers that scoped CSS cannot target -->
 <style>
-#content.app-excalidraw {
-	height: calc(100vh - var(--header-height, 50px));
-	display: flex;
-	overflow: hidden;
-}
-
-/* NcContent (.content class, id="content-vue") — fill parent */
-#content.app-excalidraw > .content,
-#content.app-excalidraw > #content-vue {
-	width: 100%;
-	height: 100%;
-	display: flex;
-}
-
-/* Outer navigation wrapper */
-#content.app-excalidraw .app-navigation {
-	height: 100%;
-}
-
-/* Inner <nav> — flex column so footer slot sticks to bottom */
+/* Inner <nav> — flex column so footer sticks to bottom */
 #content.app-excalidraw .app-navigation__content {
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 }
 
-/* Navigation body — scrollable, takes remaining space */
-#content.app-excalidraw .app-navigation__body {
+/* List (from #list slot) — scrollable, takes remaining space */
+#content.app-excalidraw .app-navigation__list {
 	flex: 1;
 	overflow-y: auto;
 	min-height: 0;

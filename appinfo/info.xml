@@ -4,7 +4,7 @@
 	<name>Excalidraw</name>
 	<summary>Open, edit and browse .excalidraw files with a built-in navigator and public sharing</summary>
 	<description>Open and edit .excalidraw files with the Excalidraw editor. Changes are automatically saved back to your Nextcloud files. Includes a navigator page with folder tree and public link viewer with PNG/SVG export.</description>
-	<version>0.3.6</version>
+	<version>0.3.7</version>
 	<licence>agpl</licence>
 	<author>KaustubhPatange (original), Etagi (fork)</author>
 	<namespace>Excalidraw</namespace>

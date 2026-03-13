@@ -5,15 +5,22 @@
  * Nextcloud's real wrapper (#content) and @nextcloud/vue's
  * rendered elements.
  *
- * DOM structure after mount:
- *   #content.app-excalidraw              ← NC server-side wrapper
- *     #content-vue.content.app-excalidraw  ← NcContent
- *       .app-navigation                     ← NcAppNavigation (outer div)
- *         nav.app-navigation__content         ← inner <nav>
- *           .app-navigation__body               ← scrollable body
- *             .app-navigation__list               ← list items
- *           .nav-footer                           ← footer slot content
- *       main.app-content                    ← NcAppContent
+ * DOM structure after mount (confirmed via DevTools diagnostic):
+ *   #content.app-excalidraw              ← NC server-side wrapper (968px)
+ *     H1.hidden-visually                  ← skip-nav heading
+ *     #content-vue.content.app-excalidraw ← NcContent (height fixed via JS)
+ *       .app-navigation                    ← NcAppNavigation (outer div)
+ *         nav.app-navigation__content        ← inner <nav>, 4 children:
+ *           .app-navigation__search            ← search slot (empty)
+ *           .app-navigation__body              ← body (0px when list used)
+ *           .app-navigation__list              ← tree items (from #list slot)
+ *           .nav-footer                        ← footer slot content
+ *         .app-navigation-toggle-wrapper     ← collapse button
+ *       main.app-content                   ← NcAppContent
+ *
+ * Key fix: NcContent sets height via inline !important to var(--body-height)
+ * which equals 100vh — overflowing #content by header-height pixels.
+ * This is corrected in NavigatorApp.vue mounted() via JS.
  */
 
 /* NC wraps our template inside #content — ensure full viewport height */
@@ -23,7 +30,9 @@
 	overflow: hidden !important;
 }
 
-/* NcContent renders as .content with id="content-vue" — fill parent */
+/* NcContent renders as .content with id="content-vue" — fill parent.
+   Note: height is overridden by JS in mounted() because NcContent
+   applies inline !important that CSS alone cannot beat. */
 #content.app-excalidraw > .content,
 #content.app-excalidraw > #content-vue {
 	width: 100% !important;
@@ -43,10 +52,17 @@
 	height: 100% !important;
 }
 
-/* Navigation body — fill available space, scroll if needed */
-#content.app-excalidraw .app-navigation__body {
+/* When #list slot is used, tree content goes into .app-navigation__list
+   (a sibling of .app-navigation__body, not inside it).
+   The list should be the scrollable area. */
+#content.app-excalidraw .app-navigation__list {
 	flex: 1 !important;
 	overflow-y: auto !important;
+	min-height: 0 !important;
+}
+
+/* Body may be empty/collapsed when list slot is used — that's normal */
+#content.app-excalidraw .app-navigation__body {
 	min-height: 0 !important;
 }
 
