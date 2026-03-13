@@ -1,0 +1,11 @@
+/* Navigator page styles */
+#content-vue {
+	height: 100%;
+}
+
+@media (max-width: 768px) {
+	.file-grid {
+		grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)) !important;
+		gap: 12px !important;
+	}
+}
