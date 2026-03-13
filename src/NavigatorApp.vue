@@ -301,25 +301,6 @@ export default {
 	},
 
 	async mounted() {
-		// Fix NcContent layout: it adds margin, padding, border-radius and
-		// height that cause overflow inside #content. CSS may not beat
-		// scoped/inline styles, so we also fix via JS.
-		const fixLayout = () => {
-			const cv = document.getElementById('content-vue')
-			if (cv) {
-				cv.style.setProperty('margin', '0', 'important')
-				cv.style.setProperty('padding', '0', 'important')
-				cv.style.setProperty('border-radius', '0', 'important')
-				cv.style.setProperty('height', '100%', 'important')
-			}
-			const ct = document.getElementById('content')
-			if (ct) {
-				ct.style.setProperty('padding', '0', 'important')
-			}
-		}
-		this.$nextTick(fixLayout)
-		requestAnimationFrame(() => requestAnimationFrame(fixLayout))
-
 		await this.loadSettings()
 		await this.refreshTree()
 	},
@@ -595,15 +576,20 @@ export default {
 
 <!-- Unscoped styles to reach NC layout wrappers that scoped CSS cannot target -->
 <style>
+/* Make #content wrapper invisible — NcContent is position:fixed
+   and manages its own layout (like in Files app) */
+#content.app-excalidraw {
+	display: contents;
+}
+
 /* Inner <nav> — flex column so footer sticks to bottom */
-#content.app-excalidraw .app-navigation__content {
+.content.app-excalidraw .app-navigation__content {
 	display: flex;
 	flex-direction: column;
-	height: 100%;
 }
 
 /* List (from #list slot) — scrollable, takes remaining space */
-#content.app-excalidraw .app-navigation__list {
+.content.app-excalidraw .app-navigation__list {
 	flex: 1;
 	overflow-y: auto;
 	min-height: 0;

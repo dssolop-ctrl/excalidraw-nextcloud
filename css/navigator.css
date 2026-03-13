@@ -1,68 +1,39 @@
 /*
  * Navigator page layout
  *
- * DOM structure after mount:
- *   #content.app-excalidraw              ← NC server-side wrapper
- *     H1.hidden-visually                  ← skip-nav heading
- *     #content-vue.content.app-excalidraw ← NcContent
- *       .app-navigation                    ← NcAppNavigation (outer div)
- *         nav.app-navigation__content        ← inner <nav>, 4 children:
- *           .app-navigation__search            ← search slot (empty)
- *           .app-navigation__body              ← body (0px when list used)
- *           .app-navigation__list              ← tree items (from #list slot)
- *           .nav-footer                        ← footer slot content
- *         .app-navigation-toggle-wrapper     ← collapse button
- *       main.app-content                   ← NcAppContent
+ * Key insight: NcContent (#content-vue) is position:fixed and manages
+ * its own margin/height/border-radius to fill the viewport below the
+ * header. NC's TemplateResponse adds a #content wrapper that doesn't
+ * exist in standard NC apps (like Files). We use display:contents to
+ * make it invisible to layout so #content-vue behaves naturally.
+ *
+ * Reference (from Files app diagnostic):
+ *   #content-vue: position:fixed, margin:50px 8px 8px,
+ *     height:var(--body-height), border-radius:16px, overflow:hidden
  */
 
-/* #content — don't force height (NC handles it), just ensure flex + clip */
+/* Make #content wrapper invisible to layout — #content-vue will
+   position itself as if #content doesn't exist (like in Files app) */
 #content.app-excalidraw {
-	display: flex !important;
-	overflow: hidden !important;
-	padding: 0 !important;
-}
-
-/* NcContent — fill parent via flex, strip margin/radius/padding that NC adds */
-#content.app-excalidraw > .content,
-#content.app-excalidraw > #content-vue {
-	flex: 1 !important;
-	min-height: 0 !important;
-	width: 100% !important;
-	display: flex !important;
-	margin: 0 !important;
-	padding: 0 !important;
-	border-radius: 0 !important;
-}
-
-/* NcAppNavigation outer wrapper — fill height */
-#content.app-excalidraw .app-navigation {
-	height: 100% !important;
+	display: contents !important;
 }
 
 /* NcAppNavigation inner <nav> — flex column so footer sticks to bottom */
-#content.app-excalidraw .app-navigation__content {
+.content.app-excalidraw .app-navigation__content {
 	display: flex !important;
 	flex-direction: column !important;
-	height: 100% !important;
 }
 
 /* List (from #list slot) — scrollable, takes remaining space */
-#content.app-excalidraw .app-navigation__list {
+.content.app-excalidraw .app-navigation__list {
 	flex: 1 !important;
 	overflow-y: auto !important;
 	min-height: 0 !important;
 }
 
-/* Body may be empty/collapsed when list slot is used — that's normal */
-#content.app-excalidraw .app-navigation__body {
+/* Body may be empty when list slot is used */
+.content.app-excalidraw .app-navigation__body {
 	min-height: 0 !important;
-}
-
-/* NcAppContent — fill remaining space */
-#content.app-excalidraw .app-content {
-	height: 100% !important;
-	flex: 1 !important;
-	overflow: auto;
 }
 
 @media (max-width: 768px) {
