@@ -1,0 +1,58 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Prepare release package
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "TAG=$TAG" >> $GITHUB_ENV
+
+          # Create a clean directory with only runtime files
+          mkdir -p /tmp/excalidraw
+
+          # Copy only what Nextcloud needs
+          cp -r appinfo   /tmp/excalidraw/
+          cp -r lib       /tmp/excalidraw/
+          cp -r templates /tmp/excalidraw/
+          cp -r js        /tmp/excalidraw/
+          cp -r css       /tmp/excalidraw/
+          cp -r img       /tmp/excalidraw/
+          cp    LICENSE    /tmp/excalidraw/
+
+          # Package
+          cd /tmp
+          tar -czf "excalidraw-${TAG}.tar.gz" excalidraw/
+          echo "ASSET_PATH=/tmp/excalidraw-${TAG}.tar.gz" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.ASSET_PATH }}
+          generate_release_notes: true
+          draft: false
