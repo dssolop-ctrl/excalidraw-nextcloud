@@ -34,6 +34,12 @@
 					</template>
 					{{ tr('Show in Files') }}
 				</NcActionButton>
+				<NcActionButton :disabled="sharing" @click="copyShareLink">
+					<template #icon>
+						<span class="icon-share" />
+					</template>
+					{{ sharing ? tr('Copying…') : tr('Share link') }}
+				</NcActionButton>
 			</NcActions>
 		</div>
 	</div>
@@ -42,10 +48,15 @@
 <script>
 import { NcActions, NcActionButton } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
+import axios from '@nextcloud/axios'
 
 const RU = {
 	'Edit': 'Редактировать',
 	'Show in Files': 'Показать в Файлах',
+	'Share link': 'Поделиться ссылкой',
+	'Copying…': 'Копирование…',
+	'Link copied to clipboard': 'Ссылка скопирована',
+	'Failed to create share link': 'Не удалось создать ссылку',
 }
 
 function formatBytes(bytes) {
@@ -68,6 +79,12 @@ export default {
 	},
 
 	emits: ['open'],
+
+	data() {
+		return {
+			sharing: false,
+		}
+	},
 
 	computed: {
 		displayName() {
@@ -96,6 +113,53 @@ export default {
 				dir,
 				name: this.file.name,
 			})
+		},
+
+		async copyShareLink() {
+			if (this.sharing) return
+			this.sharing = true
+			try {
+				const ocsUrl = generateUrl('/ocs/v2.php/apps/files_sharing/api/v1/shares')
+
+				// Check for existing public link share
+				const { data: existing } = await axios.get(ocsUrl, {
+					params: { path: this.file.path, format: 'json' },
+					headers: { 'OCS-APIRequest': 'true' },
+				})
+
+				let token
+				const shares = existing?.ocs?.data || []
+				const publicLink = shares.find(s => s.share_type === 3)
+
+				if (publicLink) {
+					token = publicLink.token
+				} else {
+					// Create a new public link share (read-only)
+					const { data: created } = await axios.post(ocsUrl, {
+						path: this.file.path,
+						shareType: 3,
+						permissions: 1,
+					}, {
+						headers: { 'OCS-APIRequest': 'true' },
+					})
+					token = created?.ocs?.data?.token
+				}
+
+				if (token) {
+					const url = window.location.origin + generateUrl('/s/{token}', { token })
+					await navigator.clipboard.writeText(url)
+					if (window.OC?.Notification?.showTemporary) {
+						window.OC.Notification.showTemporary(this.tr('Link copied to clipboard'))
+					}
+				}
+			} catch (e) {
+				console.error('[excalidraw] Failed to create share link:', e)
+				if (window.OC?.Notification?.showTemporary) {
+					window.OC.Notification.showTemporary(this.tr('Failed to create share link'))
+				}
+			} finally {
+				this.sharing = false
+			}
 		},
 	},
 }
