@@ -47,7 +47,7 @@
 
 <script>
 import { NcActions, NcActionButton } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
+import { generateUrl, generateOcsUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 
 const RU = {
@@ -119,7 +119,7 @@ export default {
 			if (this.sharing) return
 			this.sharing = true
 			try {
-				const ocsUrl = generateUrl('/ocs/v2.php/apps/files_sharing/api/v1/shares')
+				const ocsUrl = generateOcsUrl('apps/files_sharing/api/v1/shares')
 
 				// Check for existing public link share
 				const { data: existing } = await axios.get(ocsUrl, {
