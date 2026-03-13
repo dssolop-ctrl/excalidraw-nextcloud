@@ -1,22 +1,37 @@
-/* Navigator page — full-height layout chain */
+/*
+ * Navigator page layout
+ *
+ * Vue replaces #excalidraw-navigator on mount, so we target
+ * Nextcloud's real wrapper (#content) and @nextcloud/vue's
+ * rendered elements (.content-vue, .app-navigation, .app-content).
+ */
 
-/* NC wraps our template in #content-vue */
-#content-vue {
-	height: 100% !important;
+/* NC wraps our template inside #content — ensure full viewport height */
+#content.app-excalidraw {
+	height: calc(100vh - var(--header-height, 50px)) !important;
+	display: flex !important;
+	overflow: hidden !important;
 }
 
-/* Our mount point must pass full height to NcContent */
-#excalidraw-navigator {
+/* NcContent renders as .content-vue — fill parent */
+#content.app-excalidraw > .content-vue {
+	width: 100%;
 	height: 100%;
-	display: flex;
-	flex-direction: column;
+	display: flex !important;
 }
 
-/* Ensure NcContent fills the mount point */
-#excalidraw-navigator > .content-vue,
-#excalidraw-navigator > [class*="content"] {
-	flex: 1;
-	min-height: 0;
+/* NcAppNavigation — full height with footer at bottom */
+#content.app-excalidraw .app-navigation {
+	height: 100% !important;
+	display: flex !important;
+	flex-direction: column !important;
+}
+
+/* NcAppContent — fill remaining space */
+#content.app-excalidraw .app-content {
+	height: 100% !important;
+	flex: 1 !important;
+	overflow: auto;
 }
 
 @media (max-width: 768px) {

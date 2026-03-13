@@ -573,3 +573,21 @@ export default {
 	gap: 8px;
 }
 </style>
+
+<!-- Unscoped styles to reach NC layout wrappers that scoped CSS cannot target -->
+<style>
+#content.app-excalidraw {
+	height: calc(100vh - var(--header-height, 50px));
+	display: flex;
+	overflow: hidden;
+}
+#content.app-excalidraw .app-navigation {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+#content.app-excalidraw .app-navigation__body {
+	flex: 1;
+	overflow-y: auto;
+}
+</style>
