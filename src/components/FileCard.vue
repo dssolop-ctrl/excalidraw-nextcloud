@@ -76,7 +76,7 @@ export default {
 		shareLink() {
 			const dir = this.file.path.substring(0, this.file.path.lastIndexOf('/'))
 			return generateUrl('/apps/files/?dir={dir}&openfile={id}', {
-				dir: encodeURIComponent(dir),
+				dir,
 				id: this.file.id,
 			})
 		},
@@ -87,7 +87,7 @@ export default {
 		openInFiles() {
 			const dir = this.file.path.substring(0, this.file.path.lastIndexOf('/'))
 			window.location.href = generateUrl('/apps/files/?dir={dir}&scrollto={name}', {
-				dir: encodeURIComponent(dir),
+				dir,
 				name: encodeURIComponent(this.file.name),
 			})
 		},

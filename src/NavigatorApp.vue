@@ -188,7 +188,7 @@ export default {
 		openFile(file) {
 			const dir = file.path.substring(0, file.path.lastIndexOf('/'))
 			window.location.href = generateUrl('/apps/files/?dir={dir}&openfile={id}', {
-				dir: encodeURIComponent(dir),
+				dir,
 				id: file.id,
 			})
 		},
