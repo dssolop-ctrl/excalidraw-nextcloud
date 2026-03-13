@@ -23,6 +23,13 @@ return [
 			'verb' => 'GET',
 		],
 
+		// API: create new .excalidraw file
+		[
+			'name' => 'api#createFile',
+			'url'  => '/api/v1/file',
+			'verb' => 'POST',
+		],
+
 		// API: get/set user settings (watched folders)
 		[
 			'name' => 'api#getSettings',

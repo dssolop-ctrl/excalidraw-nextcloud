@@ -1,15 +1,24 @@
 <template>
-	<div class="file-card" @click="$emit('open', file)">
-		<div class="file-card__preview">
+	<div :class="['file-card', { 'file-card--list': listView }]" @click="$emit('open', file)">
+		<div v-if="!listView" class="file-card__preview">
 			<svg class="file-card__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+				<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+			</svg>
+		</div>
+
+		<div v-if="listView" class="file-card__list-icon">
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
 				<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
 			</svg>
 		</div>
 
 		<div class="file-card__info">
 			<span class="file-card__name" :title="file.name">{{ displayName }}</span>
-			<span class="file-card__meta">{{ formattedSize }} · {{ formattedDate }}</span>
+			<span v-if="!listView" class="file-card__meta">{{ formattedSize }} · {{ formattedDate }}</span>
 		</div>
+
+		<span v-if="listView" class="file-card__size">{{ formattedSize }}</span>
+		<span v-if="listView" class="file-card__date">{{ formattedDate }}</span>
 
 		<div class="file-card__actions" @click.stop>
 			<NcActions>
@@ -25,19 +34,13 @@
 					</template>
 					{{ t('excalidraw', 'Show in Files') }}
 				</NcActionButton>
-				<NcActionLink :href="shareLink" target="_blank">
-					<template #icon>
-						<span class="icon-public" />
-					</template>
-					{{ t('excalidraw', 'Share link') }}
-				</NcActionLink>
 			</NcActions>
 		</div>
 	</div>
 </template>
 
 <script>
-import { NcActions, NcActionButton, NcActionLink } from '@nextcloud/vue'
+import { NcActions, NcActionButton } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
 import { translate as t } from '@nextcloud/l10n'
 
@@ -52,10 +55,11 @@ function formatBytes(bytes) {
 export default {
 	name: 'FileCard',
 
-	components: { NcActions, NcActionButton, NcActionLink },
+	components: { NcActions, NcActionButton },
 
 	props: {
 		file: { type: Object, required: true },
+		listView: { type: Boolean, default: false },
 	},
 
 	emits: ['open'],
@@ -73,13 +77,6 @@ export default {
 				day: 'numeric', month: 'short', year: 'numeric',
 			})
 		},
-		shareLink() {
-			const dir = this.file.path.substring(0, this.file.path.lastIndexOf('/'))
-			return generateUrl('/apps/files/?dir={dir}&openfile={id}', {
-				dir,
-				id: this.file.id,
-			})
-		},
 	},
 
 	methods: {
@@ -88,7 +85,7 @@ export default {
 			const dir = this.file.path.substring(0, this.file.path.lastIndexOf('/'))
 			window.location.href = generateUrl('/apps/files/?dir={dir}&scrollto={name}', {
 				dir,
-				name: encodeURIComponent(this.file.name),
+				name: this.file.name,
 			})
 		},
 	},
@@ -96,6 +93,7 @@ export default {
 </script>
 
 <style scoped>
+/* ── Grid view (default card) ── */
 .file-card {
 	display: flex;
 	flex-direction: column;
@@ -146,5 +144,49 @@ export default {
 	display: flex;
 	justify-content: flex-end;
 	padding: 0 4px 4px;
+}
+
+/* ── List view ── */
+.file-card--list {
+	flex-direction: row;
+	align-items: center;
+	border-radius: 8px;
+	padding: 0 8px;
+	gap: 12px;
+	height: 44px;
+}
+.file-card--list .file-card__info {
+	flex: 1;
+	padding: 0;
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+}
+.file-card--list .file-card__name {
+	flex: 1;
+	min-width: 0;
+}
+.file-card__list-icon {
+	color: var(--color-text-maxcontrast);
+	opacity: 0.5;
+	display: flex;
+	align-items: center;
+	flex-shrink: 0;
+}
+.file-card__size,
+.file-card__date {
+	font-size: 13px;
+	color: var(--color-text-maxcontrast);
+	white-space: nowrap;
+	flex-shrink: 0;
+	width: 80px;
+	text-align: right;
+}
+.file-card__date {
+	width: 110px;
+}
+.file-card--list .file-card__actions {
+	padding: 0;
+	flex-shrink: 0;
 }
 </style>

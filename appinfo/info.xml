@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <info>
 	<id>excalidraw</id>
-	<n>Excalidraw</n>
+	<name>Excalidraw</name>
 	<summary>Open, edit and browse .excalidraw files with a built-in navigator and public sharing</summary>
 	<description>Open and edit .excalidraw files with the Excalidraw editor. Changes are automatically saved back to your Nextcloud files. Includes a navigator page with folder tree and public link viewer with PNG/SVG export.</description>
 	<version>0.2.0</version>

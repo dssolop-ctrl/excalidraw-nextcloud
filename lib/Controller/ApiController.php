@@ -142,6 +142,61 @@ class ApiController extends Controller {
 		return new JSONResponse(['watchedFolders' => $folders]);
 	}
 
+	/**
+	 * POST /api/v1/file — create a new empty .excalidraw file.
+	 * Body: { "dir": "/Excalidraw", "name": "My diagram" }
+	 */
+	#[NoAdminRequired]
+	public function createFile(): JSONResponse {
+		$uid = $this->getUserId();
+		if ($uid === null) {
+			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		$dir = $this->request->getParam('dir', '');
+		$name = trim($this->request->getParam('name', ''));
+
+		if ($dir === '' || $name === '') {
+			return new JSONResponse(['error' => 'Missing dir or name'], Http::STATUS_BAD_REQUEST);
+		}
+
+		if (!str_ends_with(strtolower($name), self::EXT)) {
+			$name .= self::EXT;
+		}
+
+		try {
+			$userFolder = $this->rootFolder->getUserFolder($uid);
+			$folder = $userFolder->get(ltrim($dir, '/'));
+			if (!$folder instanceof Folder) {
+				return new JSONResponse(['error' => 'Not a folder'], Http::STATUS_BAD_REQUEST);
+			}
+
+			$emptyScene = json_encode([
+				'type' => 'excalidraw',
+				'version' => 2,
+				'source' => 'excalidraw-nextcloud',
+				'elements' => [],
+				'appState' => ['gridSize' => null],
+				'files' => new \stdClass(),
+			]);
+
+			$file = $folder->newFile($name, $emptyScene);
+
+			return new JSONResponse([
+				'id'       => $file->getId(),
+				'name'     => $file->getName(),
+				'path'     => $dir . '/' . $file->getName(),
+				'type'     => 'file',
+				'size'     => $file->getSize(),
+				'modified' => $file->getMTime(),
+			]);
+		} catch (\OCP\Files\NotPermittedException $e) {
+			return new JSONResponse(['error' => 'Permission denied'], Http::STATUS_FORBIDDEN);
+		} catch (NotFoundException) {
+			return new JSONResponse(['error' => 'Folder not found'], Http::STATUS_NOT_FOUND);
+		}
+	}
+
 	// ─── Helpers ───────────────────────────────────────────────
 
 	private function scanFolder(Folder $folder, string $relPath): ?array {
