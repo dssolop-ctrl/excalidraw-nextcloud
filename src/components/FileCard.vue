@@ -26,13 +26,13 @@
 					<template #icon>
 						<span class="icon-edit" />
 					</template>
-					{{ t('excalidraw', 'Edit') }}
+					{{ tr('Edit') }}
 				</NcActionButton>
 				<NcActionButton @click="openInFiles">
 					<template #icon>
 						<span class="icon-folder" />
 					</template>
-					{{ t('excalidraw', 'Show in Files') }}
+					{{ tr('Show in Files') }}
 				</NcActionButton>
 			</NcActions>
 		</div>
@@ -42,7 +42,11 @@
 <script>
 import { NcActions, NcActionButton } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
+
+const RU = {
+	'Edit': 'Редактировать',
+	'Show in Files': 'Показать в Файлах',
+}
 
 function formatBytes(bytes) {
 	if (bytes === 0) return '0 B'
@@ -60,6 +64,7 @@ export default {
 	props: {
 		file: { type: Object, required: true },
 		listView: { type: Boolean, default: false },
+		lang: { type: String, default: 'ru' },
 	},
 
 	emits: ['open'],
@@ -73,14 +78,18 @@ export default {
 		},
 		formattedDate() {
 			if (!this.file.modified) return ''
-			return new Date(this.file.modified * 1000).toLocaleDateString(undefined, {
+			const locale = this.lang === 'ru' ? 'ru-RU' : undefined
+			return new Date(this.file.modified * 1000).toLocaleDateString(locale, {
 				day: 'numeric', month: 'short', year: 'numeric',
 			})
 		},
 	},
 
 	methods: {
-		t,
+		tr(key) {
+			if (this.lang === 'en') return key
+			return RU[key] || key
+		},
 		openInFiles() {
 			const dir = this.file.path.substring(0, this.file.path.lastIndexOf('/'))
 			window.location.href = generateUrl('/apps/files/?dir={dir}&scrollto={name}', {

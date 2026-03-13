@@ -2,7 +2,7 @@
 	<NcContent app-name="excalidraw">
 		<NcAppNavigation>
 			<template #list>
-				<NcAppNavigationCaption :name="t('excalidraw', 'Watched folders')" />
+				<NcAppNavigationCaption :name="tr('Folders')" />
 
 				<TreeNode
 					v-for="folder in tree"
@@ -11,25 +11,25 @@
 					:selected-path="selectedFolderPath"
 					@select="onFolderSelect"
 				/>
-
-				<NcAppNavigationItem
-					:name="t('excalidraw', 'Add folder…')"
-					@click="showAddFolder = true">
-					<template #icon>
-						<span class="icon-add" />
-					</template>
-				</NcAppNavigationItem>
 			</template>
 
 			<template #footer>
-				<div class="nav-footer">
-					<NcButton type="tertiary" @click="refreshTree">
+				<ul class="nav-footer-list">
+					<NcAppNavigationItem
+						:name="tr('Refresh')"
+						@click="refreshTree">
 						<template #icon>
 							<span class="icon-history" />
 						</template>
-						{{ t('excalidraw', 'Refresh') }}
-					</NcButton>
-				</div>
+					</NcAppNavigationItem>
+					<NcAppNavigationItem
+						:name="tr('Settings')"
+						@click="showSettings = true">
+						<template #icon>
+							<span class="icon-settings" />
+						</template>
+					</NcAppNavigationItem>
+				</ul>
 			</template>
 		</NcAppNavigation>
 
@@ -38,9 +38,9 @@
 				<div class="content-header">
 					<div class="content-header__left">
 						<h2 v-if="selectedFolder">{{ selectedFolder.name }}</h2>
-						<h2 v-else>{{ t('excalidraw', 'Select a folder') }}</h2>
+						<h2 v-else>{{ tr('Select a folder') }}</h2>
 						<span v-if="currentFiles.length" class="file-count">
-							{{ currentFiles.length }} {{ currentFiles.length === 1 ? 'drawing' : 'drawings' }}
+							{{ fileCountLabel }}
 						</span>
 					</div>
 
@@ -52,14 +52,14 @@
 							<template #icon>
 								<span class="icon-add" />
 							</template>
-							{{ t('excalidraw', 'New drawing') }}
+							{{ tr('New drawing') }}
 						</NcButton>
 
 						<div class="view-toggle">
 							<NcButton
 								:type="viewMode === 'grid' ? 'secondary' : 'tertiary'"
-								:aria-label="t('excalidraw', 'Grid view')"
-								@click="viewMode = 'grid'">
+								:aria-label="tr('Grid view')"
+								@click="setViewMode('grid')">
 								<template #icon>
 									<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
 										<rect x="1" y="1" width="7" height="7" rx="1.5" />
@@ -71,8 +71,8 @@
 							</NcButton>
 							<NcButton
 								:type="viewMode === 'list' ? 'secondary' : 'tertiary'"
-								:aria-label="t('excalidraw', 'List view')"
-								@click="viewMode = 'list'">
+								:aria-label="tr('List view')"
+								@click="setViewMode('list')">
 								<template #icon>
 									<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
 										<rect x="1" y="2" width="18" height="3" rx="1" />
@@ -91,14 +91,15 @@
 						:key="file.id"
 						:file="file"
 						:list-view="viewMode === 'list'"
+						:lang="lang"
 						@open="openFile"
 					/>
 				</div>
 
 				<NcEmptyContent
 					v-else-if="selectedFolder && !loading"
-					:name="t('excalidraw', 'No drawings here')"
-					:description="t('excalidraw', 'Click «New drawing» to create one')">
+					:name="tr('No drawings here')"
+					:description="tr('Click «New drawing» to create one')">
 					<template #icon>
 						<span class="icon-file" />
 					</template>
@@ -108,24 +109,68 @@
 			</div>
 		</NcAppContent>
 
-		<!-- Add folder dialog -->
+		<!-- Settings dialog -->
 		<NcDialog
-			v-if="showAddFolder"
-			:name="t('excalidraw', 'Add watched folder')"
-			@close="showAddFolder = false">
-			<div class="dialog-body">
-				<NcTextField
-					v-model="newFolderPath"
-					:label="t('excalidraw', 'Folder path (e.g. /Excalidraw)')"
-					:placeholder="'/Excalidraw'"
-				/>
-				<div class="dialog-actions">
-					<NcButton type="secondary" @click="showAddFolder = false">
-						{{ t('excalidraw', 'Cancel') }}
-					</NcButton>
-					<NcButton type="primary" :disabled="!newFolderPath.trim()" @click="addFolder">
-						{{ t('excalidraw', 'Add') }}
-					</NcButton>
+			v-if="showSettings"
+			:name="tr('Settings')"
+			size="normal"
+			@close="showSettings = false">
+			<div class="settings-body">
+				<!-- Folders section -->
+				<div class="settings-section">
+					<h3>{{ tr('Folders') }}</h3>
+					<p class="settings-hint">{{ tr('Add parent folders — subfolders are scanned automatically') }}</p>
+					<ul class="folder-list">
+						<li v-for="folder in watchedFolders" :key="folder" class="folder-list__item">
+							<span class="icon-folder folder-list__icon" />
+							<span class="folder-list__path">{{ folder }}</span>
+							<NcButton
+								type="tertiary"
+								:aria-label="tr('Remove')"
+								@click="removeFolder(folder)">
+								<template #icon>
+									<span class="icon-close" />
+								</template>
+							</NcButton>
+						</li>
+					</ul>
+					<div class="folder-add">
+						<NcTextField
+							v-model="newFolderPath"
+							:label="tr('Folder path')"
+							:placeholder="'/Excalidraw'"
+							@keydown.enter="addFolder"
+						/>
+						<NcButton
+							type="secondary"
+							:disabled="!newFolderPath.trim()"
+							@click="addFolder">
+							{{ tr('Add') }}
+						</NcButton>
+					</div>
+				</div>
+
+				<!-- Language section -->
+				<div class="settings-section">
+					<h3>{{ tr('Language') }}</h3>
+					<div class="lang-options">
+						<label class="lang-option">
+							<input
+								type="radio"
+								value="ru"
+								:checked="lang === 'ru'"
+								@change="setLang('ru')">
+							Русский
+						</label>
+						<label class="lang-option">
+							<input
+								type="radio"
+								value="en"
+								:checked="lang === 'en'"
+								@change="setLang('en')">
+							English
+						</label>
+					</div>
 				</div>
 			</div>
 		</NcDialog>
@@ -133,22 +178,22 @@
 		<!-- New drawing dialog -->
 		<NcDialog
 			v-if="showNewFile"
-			:name="t('excalidraw', 'New drawing')"
+			:name="tr('New drawing')"
 			@close="showNewFile = false">
 			<div class="dialog-body">
 				<NcTextField
 					ref="newFileInput"
 					v-model="newFileName"
-					:label="t('excalidraw', 'Drawing name')"
-					:placeholder="t('excalidraw', 'My drawing')"
+					:label="tr('Drawing name')"
+					:placeholder="tr('My drawing')"
 					@keydown.enter="createFile"
 				/>
 				<div class="dialog-actions">
 					<NcButton type="secondary" @click="showNewFile = false">
-						{{ t('excalidraw', 'Cancel') }}
+						{{ tr('Cancel') }}
 					</NcButton>
 					<NcButton type="primary" :disabled="!newFileName.trim() || creating" @click="createFile">
-						{{ creating ? t('excalidraw', 'Creating…') : t('excalidraw', 'Create') }}
+						{{ creating ? tr('Creating…') : tr('Create') }}
 					</NcButton>
 				</div>
 			</div>
@@ -170,11 +215,40 @@ import {
 	NcTextField,
 } from '@nextcloud/vue'
 import { generateUrl } from '@nextcloud/router'
-import { translate as t } from '@nextcloud/l10n'
 import axios from '@nextcloud/axios'
 
 import TreeNode from './components/TreeNode.vue'
 import FileCard from './components/FileCard.vue'
+
+const RU = {
+	'Folders': 'Папки',
+	'Settings': 'Настройки',
+	'Refresh': 'Обновить',
+	'Select a folder': 'Выберите папку',
+	'New drawing': 'Новый рисунок',
+	'Grid view': 'Плитки',
+	'List view': 'Список',
+	'No drawings here': 'Нет рисунков',
+	'Click «New drawing» to create one': 'Нажмите «Новый рисунок» чтобы создать',
+	'Drawing name': 'Название рисунка',
+	'My drawing': 'Мой рисунок',
+	'Cancel': 'Отмена',
+	'Create': 'Создать',
+	'Creating…': 'Создание…',
+	'Language': 'Язык',
+	'Remove': 'Удалить',
+	'Add': 'Добавить',
+	'Folder path': 'Путь к папке',
+	'Add parent folders — subfolders are scanned automatically': 'Добавьте родительские папки — вложенные сканируются автоматически',
+}
+
+function ruPlural(n) {
+	const mod10 = n % 10
+	const mod100 = n % 100
+	if (mod10 === 1 && mod100 !== 11) return `${n} рисунок`
+	if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return `${n} рисунка`
+	return `${n} рисунков`
+}
 
 export default {
 	name: 'NavigatorApp',
@@ -199,11 +273,12 @@ export default {
 			tree: [],
 			selectedFolderPath: '',
 			loading: false,
-			showAddFolder: false,
-			newFolderPath: '',
 			watchedFolders: [],
-			viewMode: 'grid',
+			viewMode: localStorage.getItem('excalidraw-viewMode') || 'grid',
+			lang: localStorage.getItem('excalidraw-lang') || 'ru',
+			showSettings: false,
 			showNewFile: false,
+			newFolderPath: '',
 			newFileName: '',
 			creating: false,
 		}
@@ -218,6 +293,11 @@ export default {
 			if (!this.selectedFolder?.children) return []
 			return this.selectedFolder.children.filter(c => c.type === 'file')
 		},
+		fileCountLabel() {
+			const n = this.currentFiles.length
+			if (this.lang === 'ru') return ruPlural(n)
+			return `${n} ${n === 1 ? 'drawing' : 'drawings'}`
+		},
 	},
 
 	async mounted() {
@@ -226,7 +306,20 @@ export default {
 	},
 
 	methods: {
-		t,
+		tr(key) {
+			if (this.lang === 'en') return key
+			return RU[key] || key
+		},
+
+		setViewMode(mode) {
+			this.viewMode = mode
+			localStorage.setItem('excalidraw-viewMode', mode)
+		},
+
+		setLang(lang) {
+			this.lang = lang
+			localStorage.setItem('excalidraw-lang', lang)
+		},
 
 		async loadSettings() {
 			try {
@@ -266,13 +359,23 @@ export default {
 
 		async addFolder() {
 			const path = '/' + this.newFolderPath.trim().replace(/^\/+/, '')
-			if (this.watchedFolders.includes(path)) {
-				this.showAddFolder = false
+			if (!path || path === '/' || this.watchedFolders.includes(path)) {
 				return
 			}
 			this.watchedFolders.push(path)
-			this.showAddFolder = false
 			this.newFolderPath = ''
+			await this.saveWatchedFolders()
+		},
+
+		async removeFolder(path) {
+			this.watchedFolders = this.watchedFolders.filter(f => f !== path)
+			if (this.selectedFolderPath.startsWith(path)) {
+				this.selectedFolderPath = ''
+			}
+			await this.saveWatchedFolders()
+		},
+
+		async saveWatchedFolders() {
 			try {
 				await axios.put(generateUrl('/apps/excalidraw/api/v1/settings'), {
 					watchedFolders: this.watchedFolders,
@@ -296,7 +399,6 @@ export default {
 				this.showNewFile = false
 				this.newFileName = ''
 				await this.refreshTree()
-				// Open the newly created file in the editor
 				if (data.path) {
 					this.openFile(data)
 				}
@@ -323,9 +425,12 @@ export default {
 
 <style scoped>
 .excalidraw-content {
-	padding: 20px 24px;
+	padding: 20px 24px 20px 52px;
 	height: 100%;
+	min-height: 100%;
 	overflow-y: auto;
+	box-sizing: border-box;
+	background: var(--color-main-background);
 }
 .content-header {
 	display: flex;
@@ -375,9 +480,87 @@ export default {
 	justify-content: center;
 	margin-top: 40px;
 }
-.nav-footer {
-	padding: 8px;
+
+/* Sidebar footer */
+.nav-footer-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
 }
+
+/* Settings dialog */
+.settings-body {
+	padding: 4px 16px 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+}
+.settings-section h3 {
+	font-size: 16px;
+	font-weight: 600;
+	margin: 0 0 4px;
+}
+.settings-hint {
+	font-size: 13px;
+	color: var(--color-text-maxcontrast);
+	margin: 0 0 10px;
+}
+.folder-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	margin-bottom: 8px;
+}
+.folder-list__item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 4px 4px 8px;
+	border-radius: 6px;
+	background: var(--color-background-dark);
+}
+.folder-list__icon {
+	flex-shrink: 0;
+	opacity: 0.5;
+}
+.folder-list__path {
+	flex: 1;
+	font-size: 14px;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+.folder-add {
+	display: flex;
+	gap: 8px;
+	align-items: flex-end;
+}
+.folder-add > :first-child {
+	flex: 1;
+}
+
+/* Language options */
+.lang-options {
+	display: flex;
+	gap: 20px;
+	margin-top: 4px;
+}
+.lang-option {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	cursor: pointer;
+	font-size: 14px;
+}
+.lang-option input[type="radio"] {
+	margin: 0;
+}
+
+/* New drawing dialog */
 .dialog-body {
 	display: flex;
 	flex-direction: column;
