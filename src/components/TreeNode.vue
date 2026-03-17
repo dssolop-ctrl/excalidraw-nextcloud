@@ -7,7 +7,9 @@
 		@click="$emit('select', node.path)"
 		@update:open="isOpen = $event">
 		<template #icon>
-			<span class="icon-folder" />
+			<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+				<path d="M20,18H4V8H20M20,6H12L10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6Z" />
+			</svg>
 		</template>
 
 		<template v-if="fileCount > 0" #counter>

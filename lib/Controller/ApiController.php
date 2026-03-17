@@ -197,6 +197,36 @@ class ApiController extends Controller {
 		}
 	}
 
+	/**
+	 * POST /api/v1/delete — delete a .excalidraw file.
+	 * Body: { "path": "/Excalidraw/diagram.excalidraw" }
+	 */
+	#[NoAdminRequired]
+	public function deleteFile(): JSONResponse {
+		$uid = $this->getUserId();
+		if ($uid === null) {
+			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		$path = trim($this->request->getParam('path', ''));
+		if ($path === '' || !str_ends_with(strtolower($path), self::EXT)) {
+			return new JSONResponse(['error' => 'Invalid path or type'], Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$file = $this->rootFolder->getUserFolder($uid)->get(ltrim($path, '/'));
+			if (!$file instanceof File) {
+				return new JSONResponse(['error' => 'Not a file'], Http::STATUS_BAD_REQUEST);
+			}
+			$file->delete();
+			return new JSONResponse(['status' => 'ok']);
+		} catch (\OCP\Files\NotPermittedException $e) {
+			return new JSONResponse(['error' => 'Permission denied'], Http::STATUS_FORBIDDEN);
+		} catch (NotFoundException) {
+			return new JSONResponse(['error' => 'File not found'], Http::STATUS_NOT_FOUND);
+		}
+	}
+
 	// ─── Helpers ───────────────────────────────────────────────
 
 	private function scanFolder(Folder $folder, string $relPath): ?array {

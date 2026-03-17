@@ -1,15 +1,11 @@
 <template>
 	<div :class="['file-card', { 'file-card--list': listView }]" @click="$emit('open', file)">
 		<div v-if="!listView" class="file-card__preview">
-			<svg class="file-card__icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
-				<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-			</svg>
+			<img class="file-card__icon" :src="appIconUrl" alt="">
 		</div>
 
 		<div v-if="listView" class="file-card__list-icon">
-			<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-				<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
-			</svg>
+			<img width="20" height="20" :src="appIconUrl" alt="">
 		</div>
 
 		<div class="file-card__info">
@@ -40,6 +36,12 @@
 					</template>
 					{{ tr('Share') }}
 				</NcActionButton>
+				<NcActionButton @click="deleteFile">
+					<template #icon>
+						<span class="icon-delete" />
+					</template>
+					{{ tr('Delete') }}
+				</NcActionButton>
 			</NcActions>
 		</div>
 	</div>
@@ -59,6 +61,8 @@ const RU = {
 	'Copied to clipboard': 'Скопировано в буфер обмена',
 	'Creating share link…': 'Создание ссылки…',
 	'Failed to create share link': 'Не удалось создать ссылку',
+	'Delete': 'Удалить',
+	'Delete failed': 'Не удалось удалить',
 }
 
 function formatBytes(bytes) {
@@ -80,7 +84,7 @@ export default {
 		lang: { type: String, default: 'ru' },
 	},
 
-	emits: ['open'],
+	emits: ['open', 'notify', 'deleted'],
 
 	computed: {
 		displayName() {
@@ -96,6 +100,9 @@ export default {
 				day: 'numeric', month: 'short', year: 'numeric',
 			})
 		},
+		appIconUrl() {
+			return generateUrl('/apps/excalidraw/img/app.svg')
+		},
 	},
 
 	methods: {
@@ -109,6 +116,19 @@ export default {
 				dir,
 				name: this.file.name,
 			})
+		},
+
+		async deleteFile() {
+			if (!confirm(this.tr('Delete') + ' "' + this.displayName + '"?')) return
+			try {
+				await axios.post(generateUrl('/apps/excalidraw/api/v1/delete'), {
+					path: this.file.path,
+				})
+				this.$emit('deleted', this.file)
+			} catch (err) {
+				console.error('[excalidraw] Delete failed:', err)
+				this.$emit('notify', this.tr('Delete failed'))
+			}
 		},
 
 		async openSharing() {

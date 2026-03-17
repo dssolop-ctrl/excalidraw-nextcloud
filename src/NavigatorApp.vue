@@ -52,7 +52,7 @@
 							<template #icon>
 								<span class="icon-add" />
 							</template>
-							{{ tr('New drawing') }}
+							{{ tr('Create') }}
 						</NcButton>
 
 						<div class="view-toggle">
@@ -94,6 +94,7 @@
 						:lang="lang"
 						@open="openFile"
 						@notify="showToast"
+						@deleted="onFileDeleted"
 					/>
 				</div>
 
@@ -231,7 +232,7 @@ const RU = {
 	'Grid view': 'Плитки',
 	'List view': 'Список',
 	'No drawings here': 'Нет рисунков',
-	'Click «New drawing» to create one': 'Нажмите «Новый рисунок» чтобы создать',
+	'Click «New drawing» to create one': 'Нажмите «Создать» чтобы создать',
 	'Drawing name': 'Название рисунка',
 	'My drawing': 'Мой рисунок',
 	'Cancel': 'Отмена',
@@ -409,6 +410,10 @@ export default {
 			} finally {
 				this.creating = false
 			}
+		},
+
+		onFileDeleted() {
+			this.refreshTree()
 		},
 
 		showToast(message) {

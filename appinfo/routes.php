@@ -30,6 +30,13 @@ return [
 			'verb' => 'POST',
 		],
 
+		// API: delete .excalidraw file
+		[
+			'name' => 'api#deleteFile',
+			'url'  => '/api/v1/delete',
+			'verb' => 'POST',
+		],
+
 		// API: get/set user settings (watched folders)
 		[
 			'name' => 'api#getSettings',
