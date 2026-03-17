@@ -47,12 +47,18 @@
 
 <script>
 import { NcActions, NcActionButton } from '@nextcloud/vue'
-import { generateUrl } from '@nextcloud/router'
+import { generateUrl, generateOcsUrl } from '@nextcloud/router'
+import axios from '@nextcloud/axios'
 
 const RU = {
 	'Edit': 'Редактировать',
 	'Show in Files': 'Показать в Файлах',
 	'Share': 'Поделиться',
+	'Link copied': 'Ссылка скопирована',
+	'Share link created and copied to clipboard': 'Публичная ссылка создана и скопирована в буфер обмена',
+	'Copied to clipboard': 'Скопировано в буфер обмена',
+	'Creating share link…': 'Создание ссылки…',
+	'Failed to create share link': 'Не удалось создать ссылку',
 }
 
 function formatBytes(bytes) {
@@ -105,13 +111,38 @@ export default {
 			})
 		},
 
-		openSharing() {
-			// Open native NC sharing panel in the Files app
-			const dir = this.file.path.substring(0, this.file.path.lastIndexOf('/'))
-			window.location.href = generateUrl('/apps/files/?dir={dir}&fileid={fileid}&opendetails=true&details=sharing', {
-				dir,
-				fileid: this.file.id,
-			})
+		async openSharing() {
+			const filePath = this.file.path
+			const ocsUrl = generateOcsUrl('apps/files_sharing/api/v1/shares')
+
+			try {
+				// Check for existing public link shares
+				const { data: listData } = await axios.get(ocsUrl, {
+					params: { path: filePath, format: 'json' },
+				})
+				const existing = (listData.ocs?.data || []).find(s => s.share_type === 3)
+
+				let shareUrl
+				if (existing) {
+					shareUrl = existing.url
+				} else {
+					// Create new public link share (read-only)
+					const { data: createData } = await axios.post(ocsUrl, {
+						path: filePath,
+						shareType: 3,
+						permissions: 1,
+					})
+					shareUrl = createData.ocs?.data?.url
+				}
+
+				if (shareUrl) {
+					await navigator.clipboard.writeText(shareUrl)
+					this.$emit('notify', this.tr('Link copied'))
+				}
+			} catch (err) {
+				console.error('[excalidraw] Share failed:', err)
+				this.$emit('notify', this.tr('Failed to create share link'))
+			}
 		},
 	},
 }

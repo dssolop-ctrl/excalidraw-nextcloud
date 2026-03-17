@@ -93,6 +93,7 @@
 						:list-view="viewMode === 'list'"
 						:lang="lang"
 						@open="openFile"
+						@notify="showToast"
 					/>
 				</div>
 
@@ -407,6 +408,26 @@ export default {
 				console.error('[excalidraw] Failed to create file:', e)
 			} finally {
 				this.creating = false
+			}
+		},
+
+		showToast(message) {
+			// Use NC's OC.Notification if available, otherwise simple alert
+			if (window.OC?.Notification?.showTemporary) {
+				window.OC.Notification.showTemporary(message)
+			} else if (window.OCP?.Toast?.success) {
+				window.OCP.Toast.success(message)
+			} else {
+				// Minimal fallback toast
+				const el = document.createElement('div')
+				el.textContent = message
+				Object.assign(el.style, {
+					position: 'fixed', top: '12px', left: '50%', transform: 'translateX(-50%)',
+					background: '#333', color: '#fff', padding: '10px 20px', borderRadius: '8px',
+					fontSize: '14px', zIndex: '99999', transition: 'opacity 0.3s',
+				})
+				document.body.appendChild(el)
+				setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 400) }, 3000)
 			}
 		},
 

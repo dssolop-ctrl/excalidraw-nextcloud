@@ -33,7 +33,9 @@ function PublicViewer({ token, fileName }) {
 	const displayName = fileName.replace(/\.excalidraw$/i, '')
 
 	useEffect(() => {
-		fetch(`/s/${token}/download`)
+		// Detect base path (handles /index.php/s/{token} or /s/{token})
+		const basePath = window.location.pathname.replace(/\/s\/.*$/, '')
+		fetch(`${basePath}/s/${token}/download`)
 			.then(res => {
 				if (!res.ok) throw new Error(`HTTP ${res.status}`)
 				return res.text()
