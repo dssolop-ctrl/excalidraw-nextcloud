@@ -176,9 +176,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	const styleEl = document.createElement('style')
 	styleEl.textContent = `
+		/* Hide NC header and registration footer */
 		#header { display: none !important; }
-		#content { padding-top: 0 !important; margin: 0 !important; }
-		#content-wrapper { padding: 0 !important; }
+		footer, .footer, #footer,
+		.guest-box + *,
+		.body-login-container > :last-child:not(.guest-box),
+		#body-public .v-dialog__content,
+		.public-auth-prompt,
+		p.info, .warning-info,
+		#nojavascript,
+		.push-bottom { display: none !important; }
+
+		/* Make content area full-screen */
+		html, body { overflow: hidden !important; height: 100vh !important; margin: 0 !important; padding: 0 !important; }
+		#content { padding: 0 !important; margin: 0 !important; width: 100% !important;
+			max-width: 100% !important; min-height: 100vh !important; position: fixed !important;
+			top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; }
+		#content-wrapper { padding: 0 !important; width: 100% !important; max-width: 100% !important;
+			height: 100vh !important; }
+		.guest-box { max-width: 100% !important; width: 100% !important; margin: 0 !important;
+			padding: 0 !important; border-radius: 0 !important; box-shadow: none !important; }
+		#excalidraw-public { width: 100% !important; height: 100vh !important; position: relative !important; }
+		.body-login-container, #body-public { width: 100% !important; max-width: 100% !important;
+			margin: 0 !important; padding: 0 !important; display: block !important; }
+
+		/* Excalidraw textarea fix */
 		.excalidraw-wysiwyg { border: none !important; outline: none !important;
 			box-shadow: none !important; background: transparent !important; }
 	`
