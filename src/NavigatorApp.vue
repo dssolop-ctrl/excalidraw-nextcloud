@@ -55,6 +55,26 @@
 							{{ tr('Create') }}
 						</NcButton>
 
+						<NcButton
+							v-if="selectedFolder"
+							type="secondary"
+							@click="$refs.importInput.click()">
+							<template #icon>
+								<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+									<path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M13.5,16V19H10.5V16H8L12,12L16,16H13.5M13,9V3.5L18.5,9H13Z" />
+								</svg>
+							</template>
+							{{ tr('Import') }}
+						</NcButton>
+						<input
+							ref="importInput"
+							type="file"
+							accept=".excalidraw"
+							multiple
+							style="display: none;"
+							@change="importFiles"
+						>
+
 						<div class="view-toggle">
 							<NcButton
 								:type="viewMode === 'grid' ? 'secondary' : 'tertiary'"
@@ -243,6 +263,10 @@ const RU = {
 	'Add': 'Добавить',
 	'Folder path': 'Путь к папке',
 	'Add parent folders — subfolders are scanned automatically': 'Добавьте родительские папки — вложенные сканируются автоматически',
+	'Import': 'Импорт',
+	'Importing…': 'Импорт…',
+	'Imported': 'Импортировано',
+	'Import failed': 'Ошибка импорта',
 }
 
 function ruPlural(n) {
@@ -409,6 +433,40 @@ export default {
 				console.error('[excalidraw] Failed to create file:', e)
 			} finally {
 				this.creating = false
+			}
+		},
+
+		async importFiles(event) {
+			const files = Array.from(event.target.files || [])
+			if (!files.length || !this.selectedFolderPath) return
+
+			let imported = 0
+			for (const file of files) {
+				if (!file.name.toLowerCase().endsWith('.excalidraw')) continue
+				try {
+					const content = await file.text()
+					// Validate JSON
+					JSON.parse(content)
+					// Upload via WebDAV PUT
+					const uid = window.OC?.currentUser || document.head.querySelector('[data-user]')?.dataset?.user
+					const davPath = `/remote.php/dav/files/${uid}${this.selectedFolderPath}/${file.name}`
+					await axios.put(davPath, content, {
+						headers: { 'Content-Type': 'application/json' },
+					})
+					imported++
+				} catch (err) {
+					console.error('[excalidraw] Import failed for', file.name, err)
+				}
+			}
+
+			// Reset input so same file can be re-selected
+			event.target.value = ''
+
+			if (imported > 0) {
+				this.showToast(this.tr('Imported') + ': ' + imported)
+				await this.refreshTree()
+			} else {
+				this.showToast(this.tr('Import failed'))
 			}
 		},
 
