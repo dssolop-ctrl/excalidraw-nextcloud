@@ -2,7 +2,7 @@
 // The actual editor is in editor.jsx (shared with the Navigator page).
 
 import { openExcalidrawEditor } from './editor'
-import { registerFileAction, FileAction, registerNewFileMenuEntry, davGetClient, davRootPath } from '@nextcloud/files'
+import { registerFileAction, FileAction, registerNewFileMenuEntry } from '@nextcloud/files'
 import { generateUrl } from '@nextcloud/router'
 import axios from '@nextcloud/axios'
 
@@ -49,39 +49,40 @@ const emptyScene = JSON.stringify({
   files: {},
 })
 
-registerNewFileMenuEntry({
-  id: 'excalidraw-new-canvas',
-  displayName: 'Новый холст',
-  iconSvgInline: appIcon,
-  order: 30,
-  async handler(context, content) {
-    // Generate unique name
-    const existingNames = content.map(n => n.basename)
-    let name = 'Новый холст.excalidraw'
-    let counter = 1
-    while (existingNames.includes(name)) {
-      name = `Новый холст (${counter}).excalidraw`
-      counter++
-    }
-
-    // Create file via WebDAV
-    const uid = window.OC?.currentUser || document.head.querySelector('[data-user]')?.dataset?.user
-    const dirPath = context.path || '/'
-    const filePath = dirPath + '/' + name
-    const davPath = `/remote.php/dav/files/${uid}${filePath}`
-
-    try {
-      await axios.put(davPath, emptyScene, {
-        headers: { 'Content-Type': 'application/json' },
-      })
-      // Reload file list
-      window.OCP?.Files?.Router?.goToRoute?.(null, null, { dir: dirPath, fileid: undefined })
-      // Fallback: reload page
-      if (!window.OCP?.Files?.Router?.goToRoute) {
-        window.location.reload()
+try {
+  registerNewFileMenuEntry({
+    id: 'excalidraw-new-canvas',
+    displayName: 'Новый холст',
+    iconSvgInline: appIcon,
+    enabled: () => true,
+    order: 30,
+    async handler(context, content) {
+      // Generate unique name
+      const existingNames = content.map(n => n.basename)
+      let name = 'Новый холст.excalidraw'
+      let counter = 1
+      while (existingNames.includes(name)) {
+        name = `Новый холст (${counter}).excalidraw`
+        counter++
       }
-    } catch (err) {
-      console.error('[excalidraw] Failed to create new canvas:', err)
-    }
-  },
-})
+
+      // Create file via WebDAV
+      const uid = window.OC?.currentUser || document.head.querySelector('[data-user]')?.dataset?.user
+      const dirPath = context.path || '/'
+      const filePath = dirPath + '/' + name
+      const davPath = `/remote.php/dav/files/${uid}${filePath}`
+
+      try {
+        await axios.put(davPath, emptyScene, {
+          headers: { 'Content-Type': 'application/json' },
+        })
+        // Reload file list to show the new file
+        window.location.reload()
+      } catch (err) {
+        console.error('[excalidraw] Failed to create new canvas:', err)
+      }
+    },
+  })
+} catch (err) {
+  console.error('[excalidraw] Failed to register new file menu entry:', err)
+}
