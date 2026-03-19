@@ -157,20 +157,12 @@
 							</NcButton>
 						</li>
 					</ul>
-					<div class="folder-add">
-						<NcTextField
-							v-model="newFolderPath"
-							:label="tr('Folder path')"
-							:placeholder="'/Excalidraw'"
-							@keydown.enter="addFolder"
-						/>
-						<NcButton
-							type="secondary"
-							:disabled="!newFolderPath.trim()"
-							@click="addFolder">
-							{{ tr('Add') }}
-						</NcButton>
-					</div>
+					<NcButton type="secondary" @click="openFolderPicker">
+						<template #icon>
+							<span class="icon-add" />
+						</template>
+						{{ tr('Add folder…') }}
+					</NcButton>
 				</div>
 
 				<!-- Language section -->
@@ -260,8 +252,8 @@ const RU = {
 	'Creating…': 'Создание…',
 	'Language': 'Язык',
 	'Remove': 'Удалить',
-	'Add': 'Добавить',
-	'Folder path': 'Путь к папке',
+	'Add folder…': 'Добавить папку…',
+	'Select folder': 'Выберите папку',
 	'Add parent folders — subfolders are scanned automatically': 'Добавьте родительские папки — вложенные сканируются автоматически',
 	'Import': 'Импорт',
 	'Importing…': 'Импорт…',
@@ -305,7 +297,6 @@ export default {
 			lang: localStorage.getItem('excalidraw-lang') || 'ru',
 			showSettings: false,
 			showNewFile: false,
-			newFolderPath: '',
 			newFileName: '',
 			creating: false,
 		}
@@ -384,14 +375,20 @@ export default {
 			}
 		},
 
-		async addFolder() {
-			const path = '/' + this.newFolderPath.trim().replace(/^\/+/, '')
-			if (!path || path === '/' || this.watchedFolders.includes(path)) {
-				return
+		openFolderPicker() {
+			if (window.OC?.dialogs?.filepicker) {
+				window.OC.dialogs.filepicker(
+					this.tr('Select folder'),
+					(path) => {
+						if (!path || path === '/' || this.watchedFolders.includes(path)) return
+						this.watchedFolders.push(path)
+						this.saveWatchedFolders()
+					},
+					false,
+					['httpd/unix-directory'],
+					true,
+				)
 			}
-			this.watchedFolders.push(path)
-			this.newFolderPath = ''
-			await this.saveWatchedFolders()
 		},
 
 		async removeFolder(path) {
@@ -618,14 +615,6 @@ export default {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-}
-.folder-add {
-	display: flex;
-	gap: 8px;
-	align-items: flex-end;
-}
-.folder-add > :first-child {
-	flex: 1;
 }
 
 /* Language options */

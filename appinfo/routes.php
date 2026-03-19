@@ -37,6 +37,13 @@ return [
 			'verb' => 'POST',
 		],
 
+		// API: all folders (for settings folder picker)
+		[
+			'name' => 'api#folders',
+			'url'  => '/api/v1/folders',
+			'verb' => 'GET',
+		],
+
 		// API: get/set user settings (watched folders)
 		[
 			'name' => 'api#getSettings',

@@ -227,6 +227,22 @@ class ApiController extends Controller {
 		}
 	}
 
+	/**
+	 * GET /api/v1/folders — returns ALL folders in user's home (for settings picker).
+	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
+	public function folders(): JSONResponse {
+		$uid = $this->getUserId();
+		if ($uid === null) {
+			return new JSONResponse(['error' => 'Not authenticated'], Http::STATUS_UNAUTHORIZED);
+		}
+
+		$userFolder = $this->rootFolder->getUserFolder($uid);
+		$tree = $this->scanAllFolders($userFolder, '');
+		return new JSONResponse($tree);
+	}
+
 	// ─── Helpers ───────────────────────────────────────────────
 
 	private function scanFolder(Folder $folder, string $relPath): ?array {
@@ -269,6 +285,22 @@ class ApiController extends Controller {
 			'type'     => 'folder',
 			'children' => $children,
 		];
+	}
+
+	private function scanAllFolders(Folder $folder, string $relPath): array {
+		$result = [];
+		foreach ($folder->getDirectoryListing() as $node) {
+			if ($node instanceof Folder) {
+				$childPath = $relPath . '/' . $node->getName();
+				$result[] = [
+					'name'     => $node->getName(),
+					'path'     => $childPath,
+					'children' => $this->scanAllFolders($node, $childPath),
+				];
+			}
+		}
+		usort($result, fn(array $a, array $b) => strnatcasecmp($a['name'], $b['name']));
+		return $result;
 	}
 
 	private function getWatched(string $uid): array {
