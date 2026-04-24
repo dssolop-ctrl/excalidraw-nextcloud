@@ -1,6 +1,6 @@
 {
   "name": "nextcloud-excalidraw",
-  "version": "0.4.2",
+  "version": "0.4.8",
   "private": true,
   "description": "Excalidraw editor, navigator, and public viewer for Nextcloud",
   "license": "AGPL-3.0-or-later",

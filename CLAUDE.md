@@ -2,30 +2,40 @@
 
 ## Project overview
 
-Fork of [KaustubhPatange/excalidraw-nextcloud](https://github.com/KaustubhPatange/excalidraw-nextcloud) with three major additions:
-1. **Navigator page** — dedicated NC top-menu page with folder tree sidebar + file grid
-2. **Public share viewer** — read-only Excalidraw viewer for public links with PNG/SVG export
-3. **Nextcloud 32 support** — original only supported NC 28–30
+Fork of [KaustubhPatange/excalidraw-nextcloud](https://github.com/KaustubhPatange/excalidraw-nextcloud) with these major additions:
+1. **Navigator page** — dedicated NC top-menu page with folder tree sidebar + file grid, grid/list toggle, settings panel
+2. **Direct editor** — navigator opens files inline in a shared editor overlay (no Files-app round-trip)
+3. **Public share viewer** — read-only Excalidraw viewer for public links with PNG/SVG export
+4. **File management** — create/delete/rename/share/import `.excalidraw` files from navigator and Files menu ("New canvas")
+5. **Nextcloud 32 support** — original only supported NC 28–30
+6. **Russian localization** and dark-theme icon variant
 
+Current version: **0.4.7** (see `appinfo/info.xml`, `package.json`).
 Repository: `https://github.com/dssolop-ctrl/excalidraw-nextcloud`
 Deployed to: Nextcloud on TrueNAS Scale (cloud.thesolop.ru)
 
 ## Architecture
 
-### Original code (untouched)
-- `src/fileaction.jsx` — React component that registers a FileAction handler for `.excalidraw` files in the Files app. Opens fullscreen Excalidraw editor overlay with WebDAV autosave (2s debounce).
-- `lib/Listeners/FilesLoadAdditionalScriptsListener.php` — injects fileaction.js on Files page load.
+### Files-app integration (modified from original)
+- `src/fileaction.jsx` — registers a FileAction handler for `.excalidraw` files and a "New canvas" entry in the Files `+` menu (via `addNewFileMenuEntry` from `@nextcloud/files` v3.12, accessed through the `window._nc_newfilemenu` global). Delegates rendering to the shared `editor.jsx` module.
+- `src/editor.jsx` — **shared** Excalidraw editor overlay (React) used by both the Files page and the Navigator. Fullscreen overlay with WebDAV autosave (2s debounce). Used via `openExcalidrawEditor()`.
+- `lib/Listeners/FilesLoadAdditionalScriptsListener.php` — injects `fileaction.js` on Files page load.
 
-### New: Navigator page
+### Navigator page
 - **PHP**: `PageController.php` renders `templates/navigator.php`, which mounts the Vue app.
-- **Vue**: `NavigatorApp.vue` → uses `@nextcloud/vue` components (`NcContent`, `NcAppNavigation`, `NcAppContent`).
+- **Vue**: `NavigatorApp.vue` → uses `@nextcloud/vue` components (`NcContent`, `NcAppNavigation`, `NcAppContent`, `NcDialog`, etc.).
   - `components/TreeNode.vue` — recursive folder tree node with file count badges.
-  - `components/FileCard.vue` — card with file name, size, date, action menu (edit / show in files / share link).
+  - `components/FileCard.vue` — card with file name, size, date, action menu (edit / show in files / share link / rename / delete). Inline-opens the shared editor.
+  - Grid/list view toggle, "New drawing" button, "Import" button (upload `.excalidraw` from PC), settings panel with folder picker.
 - **API**: `ApiController.php` provides:
   - `GET /api/v1/tree` — recursive scan of watched folders, returns nested JSON with `.excalidraw` files.
-  - `GET /api/v1/file?path=...` — raw JSON content of a single file (for future preview thumbnails).
+  - `GET /api/v1/file?path=...` — raw JSON content of a single file.
+  - `POST /api/v1/create` — create a new empty `.excalidraw` file.
+  - `POST /api/v1/delete` — delete a `.excalidraw` file.
+  - `GET /api/v1/folders` — list all folders for the settings folder picker.
   - `GET /api/v1/settings` / `PUT /api/v1/settings` — per-user watched folders list (stored via `OCP\IConfig`).
-- Default watched folder: `/Excalidraw`. Users can add more via "Add folder…" button.
+- Sharing goes through NC's OCS Share API (`generateOcsUrl`) with copy-to-clipboard; inside Files the native sharing panel is opened.
+- Default watched folder: `/Excalidraw`. Users can add more via the settings folder picker.
 
 ### New: Public share viewer
 - **PHP**: `ExcalidrawPublicShareProvider.php` implements `IPublicShareTemplateProvider`.
@@ -37,9 +47,9 @@ Deployed to: Nextcloud on TrueNAS Scale (cloud.thesolop.ru)
 - **Fallback**: `PublicViewController.php` extends `PublicShareController` as route fallback.
 
 ### Navigation entry
-- Defined in `appinfo/info.xml` `<navigation>` block.
+- Defined in `appinfo/info.xml` `<navigation>` block (`<name>` tag, not `<n>`).
 - Routes to `excalidraw.page.index` → `PageController::index()`.
-- Icon: `img/app.svg` (pencil icon).
+- Icons: `img/app.svg` (light) and `img/app-dark.svg` (dark theme, Excalidraw brand logo).
 
 ## Tech stack
 
@@ -66,27 +76,20 @@ Webpack config is custom (not NC preset) because the original used plain webpack
 
 ## Known issues & bugs to fix
 
-### CRITICAL: Double URL encoding on Cyrillic paths
-**Status**: NEEDS FIX
-**Where**: `NavigatorApp.vue` → `openFile()` method, `FileCard.vue` → `openInFiles()` and `shareLink` computed.
-**Problem**: `encodeURIComponent(dir)` wraps a path like `/Дима` which `generateUrl` then encodes again → `%252F%25D0%2594...` → "Папка не найдена".
-**Fix**: Remove `encodeURIComponent()` from all three places. `generateUrl` from `@nextcloud/router` handles encoding internally.
-
-### Navigation icon not showing in top bar
-**Status**: PARTIALLY RESOLVED
-**Where**: `appinfo/info.xml`
-**Problem**: Original XML used `<n>` tag (Nextcloud shorthand for app name) inside `<navigation>` block, but navigation requires `<name>` tag. Fixed via `sed` on the server, needs to be fixed in source.
-**Note**: The icon appears in the top bar but may be in the overflow menu (⋯) if many apps are installed. Direct URL works: `/index.php/apps/excalidraw/`.
-
-### Apache pretty URLs
-**Status**: KNOWN LIMITATION
-**Where**: Apache config on TrueNAS
-**Problem**: `/apps/excalidraw/` returns Apache 404, but `/index.php/apps/excalidraw/` works. This is an Apache rewrite config issue, not our app's problem. NC's `.htaccess` or Apache vhost needs `mod_rewrite` properly configured.
-
 ### Preview thumbnails not implemented
 **Status**: TODO
 **Where**: `FileCard.vue`
 **Details**: The `file-card__preview` div shows a placeholder icon. The API endpoint `GET /api/v1/file` exists to fetch file content. Need to render a static SVG preview from Excalidraw scene data (elements array) into a canvas thumbnail.
+
+### Apache pretty URLs (environment, not app)
+**Status**: KNOWN LIMITATION
+**Where**: Apache config on TrueNAS
+**Problem**: `/apps/excalidraw/` returns Apache 404, but `/index.php/apps/excalidraw/` works. Apache rewrite / `mod_rewrite` is not properly configured. Not our app's bug.
+
+### Resolved (historical reference)
+- ✅ **Double URL encoding on Cyrillic paths** — fixed in `f7ca2a7`. `generateUrl` handles encoding internally; never wrap paths with `encodeURIComponent()` before passing to it.
+- ✅ **Navigation icon `<n>` vs `<name>`** — fixed in source (`e36a4c6`).
+- ✅ **405 on create file**, **NcContent layout gaps**, **public viewer fullscreen** — all fixed; see commit history if they regress.
 
 ## File structure
 
@@ -109,15 +112,17 @@ excalidraw/
 │   ├── navigator.php             # Vue mount point: <div id="excalidraw-navigator">
 │   └── public.php                # React mount point: <div id="excalidraw-public">
 ├── src/
-│   ├── fileaction.jsx            # (original, DO NOT MODIFY) editor overlay
-│   ├── navigator.js              # Vue entry point
+│   ├── fileaction.jsx            # FileAction handler + "New canvas" menu entry
+│   ├── editor.jsx                # Shared Excalidraw editor overlay (React), used by fileaction + navigator
+│   ├── navigator.js              # Vue entry point (exposes openExcalidrawEditor on window)
 │   ├── public.jsx                # React public viewer entry
-│   ├── NavigatorApp.vue          # Main navigator: sidebar + file grid
+│   ├── NavigatorApp.vue          # Main navigator: sidebar + file grid/list
 │   └── components/
 │       ├── TreeNode.vue          # Recursive folder tree
 │       └── FileCard.vue          # File card with metadata + actions
 ├── css/navigator.css
-├── img/app.svg                   # Navigation menu icon
+├── img/app.svg                   # Navigation menu icon (light theme)
+├── img/app-dark.svg              # Navigation menu icon (dark theme)
 ├── js/                           # BUILD OUTPUT (gitignored)
 │   ├── fileaction.js
 │   ├── navigator.js
@@ -137,12 +142,15 @@ excalidraw/
 
 | Method | URL | Auth | Description |
 |---|---|---|---|
-| GET | `/apps/excalidraw/` | User | Navigator page |
-| GET | `/apps/excalidraw/api/v1/tree` | User | File tree JSON |
-| GET | `/apps/excalidraw/api/v1/file?path=...` | User | Raw .excalidraw JSON |
-| GET | `/apps/excalidraw/api/v1/settings` | User | Watched folders list |
-| PUT | `/apps/excalidraw/api/v1/settings` | User | Update watched folders |
-| GET | `/apps/excalidraw/s/{token}` | Public | Public share viewer |
+| GET  | `/apps/excalidraw/` | User | Navigator page |
+| GET  | `/apps/excalidraw/api/v1/tree` | User | File tree JSON |
+| GET  | `/apps/excalidraw/api/v1/file?path=...` | User | Raw .excalidraw JSON |
+| POST | `/apps/excalidraw/api/v1/create` | User | Create new `.excalidraw` file |
+| POST | `/apps/excalidraw/api/v1/delete` | User | Delete `.excalidraw` file |
+| GET  | `/apps/excalidraw/api/v1/folders` | User | All folders (settings picker) |
+| GET  | `/apps/excalidraw/api/v1/settings` | User | Watched folders list |
+| PUT  | `/apps/excalidraw/api/v1/settings` | User | Update watched folders |
+| GET  | `/apps/excalidraw/s/{token}` | Public | Public share viewer |
 
 ## Development workflow
 
@@ -197,11 +205,15 @@ git push origin v0.X.Y
 
 ## Future ideas
 
-- [ ] Fix double URL encoding bug (critical)
 - [ ] Canvas preview thumbnails in FileCard using Excalidraw's `exportToBlob` with small dimensions
-- [ ] Drag-and-drop `.excalidraw` file import from excalidraw.com
-- [ ] "New drawing" button in navigator that creates empty `.excalidraw` file
+- [ ] Drag-and-drop `.excalidraw` import from excalidraw.com (basic PC upload via "Import" already exists)
 - [ ] Collaborative editing via Excalidraw's collab protocol (major feature)
-- [ ] Localization (l10n) — Russian translation file
+- [ ] Additional locales beyond Russian
 - [ ] Remove legacy `draft-release.yml` workflow
 - [ ] Add `package-lock.json` to repo (allows `npm ci` and GitHub Actions caching)
+
+### Recently shipped (for context)
+- v0.4.7 "New canvas" entry in Files `+` menu via `addNewFileMenuEntry` (`@nextcloud/files` v3.12, `window._nc_newfilemenu`)
+- v0.4.4–0.4.6 Import button, dark app icon, inline SVG icons, delete + rename actions
+- v0.4.2–0.4.3 Share link via OCS API with clipboard, public viewer layout fixes
+- v0.4.0–0.4.1 Direct editor from navigator, new drawing, grid/list toggle, Russian locale, settings panel

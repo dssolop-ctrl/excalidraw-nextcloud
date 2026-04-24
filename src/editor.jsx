@@ -26,6 +26,28 @@ function getFingerprint(elements, files) {
   return `${elFp}|${filesFp}`
 }
 
+const libraryStorageKey = (userId) => `excalidraw-nc:library:${userId}`
+
+function loadLibrary(userId) {
+  try {
+    const raw = localStorage.getItem(libraryStorageKey(userId))
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch (err) {
+    console.error('[excalidraw] failed to load library from localStorage:', err)
+    return []
+  }
+}
+
+function saveLibrary(userId, items) {
+  try {
+    localStorage.setItem(libraryStorageKey(userId), JSON.stringify(items))
+  } catch (err) {
+    console.error('[excalidraw] failed to save library to localStorage:', err)
+  }
+}
+
 function ExcalidrawEditor({ filePath, userId, onClose }) {
   const [initialData, setInitialData] = useState(null)
   const [saveStatus, setSaveStatus] = useState('idle')
@@ -48,6 +70,7 @@ function ExcalidrawEditor({ filePath, userId, onClose }) {
           elements: data.elements || [],
           appState: data.appState || {},
           files: data.files || {},
+          libraryItems: loadLibrary(userId),
         })
         setLoading(false)
       })
@@ -145,6 +168,7 @@ function ExcalidrawEditor({ filePath, userId, onClose }) {
         hasChangesRef.current = true
         debouncedSave(elements, appState, files)
       }}
+      onLibraryChange={(items) => saveLibrary(userId, items)}
       UIOptions={{
         canvasActions: { saveToActiveFile: false, loadScene: false, export: false },
       }}
